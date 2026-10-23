@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Logo from '../ui/Logo.jsx';
 import Icon from '../ui/Icon.jsx';
-import { Link, SectionLink, ROUTES } from '../../lib/router.jsx';
+import { Link, SectionLink, ROUTES, navigate } from '../../lib/router.jsx';
+import { useAuth } from '../../auth/AuthProvider.jsx';
 
 const SECTION_LINKS = [
   { section: 'explorar', label: 'Explorar gimnasios' },
@@ -11,6 +12,8 @@ const SECTION_LINKS = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { user, workspaces, signOut } = useAuth();
+  const hasPanel = (workspaces?.gyms || []).length > 0;
   const [scrolled, setScrolled] = useState(false);
   const toggleRef = useRef(null);
   const close = () => setOpen(false);
@@ -56,9 +59,24 @@ export default function Navbar() {
                 <SectionLink section={item.section} onClick={close}>{item.label}</SectionLink>
               </li>
             ))}
-            <li className="navbar-links-login">
-              <Link to={ROUTES.access} onClick={close}>Iniciar sesión</Link>
-            </li>
+            {user ? (
+              <>
+                {hasPanel && (
+                  <li className="navbar-links-login">
+                    <Link to={ROUTES.panel} onClick={close}>Mi panel</Link>
+                  </li>
+                )}
+                <li className={hasPanel ? '' : 'navbar-links-login'}>
+                  <button type="button" className="nav-button" onClick={async () => { close(); await signOut(); navigate(ROUTES.home); }}>
+                    Cerrar sesión
+                  </button>
+                </li>
+              </>
+            ) : (
+              <li className="navbar-links-login">
+                <Link to={ROUTES.access} onClick={close}>Iniciar sesión</Link>
+              </li>
+            )}
             <li className="navbar-links-cta">
               <Link to={ROUTES.affiliation} className="btn btn--primary" onClick={close}>
                 Afiliar mi gimnasio

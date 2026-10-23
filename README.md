@@ -15,6 +15,15 @@ npm run build     # build de producción en /dist
 npm run preview   # sirve el build para revisarlo
 ```
 
+## Backend y documentación por fases
+
+- `docs/fase-1-auditoria.md`: auditoría y plan técnico.
+- `docs/fase-2-backend-y-entrenadores.md`: qué está operativo, cómo activar Supabase y qué falta.
+- `supabase/migrations/`: esquema, seguridad (RLS) y funciones de negocio.
+- `npm test` (pruebas unitarias) y `npm run test:db` (pruebas de seguridad en PostgreSQL).
+
+Sin `.env.local`, la app funciona en **modo demostración** y lo indica en cada pantalla.
+
 ## Rutas
 
 | Ruta | Qué muestra |
@@ -22,7 +31,11 @@ npm run preview   # sirve el build para revisarlo
 | `/` | Landing completa |
 | `/gimnasios` | Buscador de gimnasios (acepta `?estado=&ciudad=&nombre=`) |
 | `/afiliacion` | Formulario de solicitud de afiliación |
-| `/acceso` | Iniciar sesión / crear cuenta de atleta |
+| `/acceso` | Iniciar sesión, crear cuenta, recuperar contraseña |
+| `/restablecer` | Crear contraseña nueva desde el enlace del correo |
+| `/gimnasios/:slug` | Perfil público del gimnasio con «Nuestros entrenadores» |
+| `/gimnasios/:slug/entrenadores/:trainer` | Perfil del entrenador dentro de su gimnasio |
+| `/panel` y `/panel/:gymId/entrenadores` | Panel del gimnasio: módulo Entrenadores |
 
 Al publicar en un hosting estático, todas las rutas deben responder con `index.html`. Ya se incluyen `public/_redirects` (Netlify) y `vercel.json` (Vercel).
 

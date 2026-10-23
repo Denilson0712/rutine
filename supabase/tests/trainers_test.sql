@@ -156,6 +156,37 @@ select t.act_as(null);
 select t.ok(t.count('select 1 from public.membership_plans') = 1, 'el público solo ve planes publicados');
 reset role;
 
+-- Guardado atómico con save_trainer
+set role authenticated;
+select t.act_as('10000000-0000-0000-0000-0000000000a1');
+select set_config('t.ts', public.save_trainer(current_setting('t.gx')::uuid, null, jsonb_build_object(
+  'full_name', 'Ana Torres', 'specialties', jsonb_build_array('Funcional'), 'experience_years', '3',
+  'is_public', true, 'status', 'active', 'location_ids', jsonb_build_array(current_setting('t.lx')),
+  'availability', jsonb_build_array(jsonb_build_object('location_id', current_setting('t.lx'), 'weekday', 2, 'starts_at', '07:00', 'ends_at', '09:00')),
+  'certifications', jsonb_build_array(jsonb_build_object('name', 'Funcional nivel 1', 'issuer', 'Academia', 'year', 2022, 'verified', true))
+))::text, false);
+select t.ok((select count(*) from public.trainer_availability where trainer_id = current_setting('t.ts')::uuid) = 1, 'save_trainer guarda disponibilidad');
+select t.ok((select verified_by from public.trainer_certifications where trainer_id = current_setting('t.ts')::uuid) = auth.uid(), 'save_trainer verifica con autoría');
+select t.fails(format($$select public.save_trainer(%L, %L, jsonb_build_object('full_name', 'Ana Torres', 'location_ids', jsonb_build_array(%L), 'availability', '[]'::jsonb))$$,
+  current_setting('t.gx'), current_setting('t.ts'), current_setting('t.ly')), 'save_trainer rechaza sedes de otro gimnasio');
+select t.ok((select count(*) from public.trainer_locations where trainer_id = current_setting('t.ts')::uuid) = 1,
+  'un guardado fallido no deja cambios a medias');
+select t.fails(format($$select public.save_trainer(%L, %L, jsonb_build_object('full_name', 'X', 'is_public', true, 'status', 'inactive'))$$,
+  current_setting('t.gx'), current_setting('t.ts')), 'un perfil inactivo no puede publicarse');
+select t.act_as('10000000-0000-0000-0000-0000000000b1');
+select t.fails(format($$select public.save_trainer(%L, %L, '{"full_name":"Robo"}')$$, current_setting('t.gx'), current_setting('t.ts')),
+  'otro gimnasio no usa save_trainer sobre fichas ajenas');
+select t.fails(format($$select public.save_trainer(%L, %L, '{"full_name":"Robo"}')$$, current_setting('t.gy'), current_setting('t.ts')),
+  'ni haciendo pasar la ficha por su propio gimnasio');
+select t.act_as('10000000-0000-0000-0000-0000000000a1');
+select public.save_trainer(current_setting('t.gx')::uuid, current_setting('t.ts')::uuid, jsonb_build_object(
+  'full_name', 'Ana Torres', 'is_public', true, 'status', 'active', 'location_ids', jsonb_build_array(current_setting('t.lx')),
+  'certifications', jsonb_build_array(jsonb_build_object('id', (select id from public.trainer_certifications where trainer_id = current_setting('t.ts')::uuid),
+     'name', 'Funcional nivel 1', 'issuer', 'Academia', 'year', 2022, 'verified', true))));
+select t.ok((select count(*) from public.trainer_availability where trainer_id = current_setting('t.ts')::uuid) = 0, 'guardar sin horarios los elimina');
+select t.ok((select count(*) from public.trainer_certifications where trainer_id = current_setting('t.ts')::uuid) = 1, 'la certificación existente se conserva (no se duplica)');
+reset role;
+
 -- Suspender el gimnasio oculta también a sus entrenadores.
 set role authenticated;
 select t.act_as('10000000-0000-0000-0000-00000000000a');

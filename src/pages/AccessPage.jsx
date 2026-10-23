@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react';
 import Field from '../components/ui/Field.jsx';
 import FormNotice from '../components/ui/FormNotice.jsx';
-import { Link, ROUTES } from '../lib/router.jsx';
+import { Link, ROUTES, navigate, useLocation } from '../lib/router.jsx';
 import { EMAIL_RE } from '../lib/validation.js';
-import { signIn, signUp } from '../services/auth.js';
+import { signIn, signUp, requestPasswordReset, loadSession } from '../services/auth.js';
+import { defaultDestination, safeReturnPath } from '../lib/workspaces.js';
+import { useAuth } from '../auth/AuthProvider.jsx';
 
 const MODES = [
   { id: 'login', label: 'Iniciar sesión' },
@@ -11,7 +13,10 @@ const MODES = [
 ];
 
 export default function AccessPage() {
-  const [mode, setMode] = useState('login');
+  const [mode, setMode] = useState('login'); // login | signup | reset
+  const [message, setMessage] = useState('');
+  const { refresh } = useAuth();
+  const { searchParams } = useLocation();
   const [values, setValues] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle');
@@ -35,7 +40,7 @@ export default function AccessPage() {
     const e = {};
     if (mode === 'signup' && values.name.trim().length < 3) e.name = 'Escribe tu nombre.';
     if (!EMAIL_RE.test(values.email.trim())) e.email = 'Escribe un correo válido.';
-    if (mode === 'signup' ? values.password.length < 8 : values.password.length === 0) {
+    if (mode !== 'reset' && (mode === 'signup' ? values.password.length < 8 : values.password.length === 0)) {
       e.password = mode === 'signup' ? 'La contraseña debe tener al menos 8 caracteres.' : 'Escribe tu contraseña.';
     }
     setErrors(e);
@@ -44,8 +49,21 @@ export default function AccessPage() {
       return;
     }
     setStatus('sending');
-    const res = mode === 'login' ? await signIn(values) : await signUp(values);
-    setStatus(res.ok ? 'ok' : res.reason === 'not_connected' ? 'not_connected' : 'error');
+    const res = mode === 'login' ? await signIn(values) : mode === 'signup' ? await signUp(values) : await requestPasswordReset(values.email);
+    setMessage(res.message || '');
+    if (res.ok && mode === 'login') {
+      // El destino se decide con los espacios que confirma el servidor.
+      const { workspaces } = await loadSession();
+      await refresh();
+      navigate(safeReturnPath(searchParams.get('volver')) || defaultDestination(workspaces));
+      return;
+    }
+    if (res.ok && mode === 'signup' && !res.needsConfirmation) {
+      await refresh();
+      navigate(safeReturnPath(searchParams.get('volver')) || ROUTES.explore);
+      return;
+    }
+    setStatus(res.ok ? (mode === 'signup' ? 'confirm' : 'reset_sent') : res.reason === 'not_connected' ? 'not_connected' : 'error');
     requestAnimationFrame(() => noticeRef.current?.focus());
   };
 
@@ -53,8 +71,9 @@ export default function AccessPage() {
     <div className="page">
       <div className="container access-page">
         <div className="form-card form-card--narrow">
-          <h1>{mode === 'login' ? 'Accede a tu cuenta' : 'Crea tu cuenta de atleta'}</h1>
+          <h1>{mode === 'login' ? 'Accede a tu cuenta' : mode === 'signup' ? 'Crea tu cuenta' : 'Recupera tu contraseña'}</h1>
 
+          {mode !== 'reset' && (
           <div
             className="segmented segmented--full"
             role="tablist"
@@ -81,17 +100,30 @@ export default function AccessPage() {
               </button>
             ))}
           </div>
+          )}
 
           {status === 'not_connected' && (
             <FormNotice innerRef={noticeRef} tone="warn" title="Las cuentas todavía no están disponibles">
               {mode === 'login'
                 ? 'El inicio de sesión aún no está conectado a un servidor, así que no se ha iniciado ninguna sesión.'
-                : 'El registro aún no está conectado a un servidor, así que no se ha creado ninguna cuenta.'}
+                : mode === 'signup'
+                  ? 'El registro aún no está conectado a un servidor, así que no se ha creado ninguna cuenta.'
+                  : 'La recuperación de contraseña aún no está conectada a un servidor, así que no se ha enviado ningún correo.'}
             </FormNotice>
           )}
           {status === 'error' && (
             <FormNotice innerRef={noticeRef} tone="error" title="No se pudo completar la operación">
-              Revisa tus datos e inténtalo de nuevo.
+              {message || 'Revisa tus datos e inténtalo de nuevo.'}
+            </FormNotice>
+          )}
+          {status === 'confirm' && (
+            <FormNotice innerRef={noticeRef} tone="ok" title="Revisa tu correo">
+              Te enviamos un enlace para confirmar tu cuenta. Después podrás iniciar sesión.
+            </FormNotice>
+          )}
+          {status === 'reset_sent' && (
+            <FormNotice innerRef={noticeRef} tone="ok" title="Revisa tu correo">
+              Si existe una cuenta con ese correo, recibirás un enlace para crear una contraseña nueva.
             </FormNotice>
           )}
 
@@ -104,6 +136,7 @@ export default function AccessPage() {
             <Field label="Correo electrónico" error={errors.email}>
               <input type="email" value={values.email} onChange={set('email')} autoComplete="email" />
             </Field>
+            {mode !== 'reset' && (
             <Field
               label="Contraseña"
               error={errors.password}
@@ -116,10 +149,19 @@ export default function AccessPage() {
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               />
             </Field>
+            )}
             <button type="submit" className="btn btn--primary btn--lg btn--block" disabled={status === 'sending'}>
-              {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+              {mode === 'login' ? 'Iniciar sesión' : mode === 'signup' ? 'Crear cuenta' : 'Enviar enlace'}
             </button>
           </form>
+
+          <p className="access-foot">
+            {mode === 'reset' ? (
+              <button type="button" className="link-button" onClick={() => switchMode('login')}>Volver a iniciar sesión</button>
+            ) : mode === 'login' ? (
+              <button type="button" className="link-button" onClick={() => switchMode('reset')}>¿Olvidaste tu contraseña?</button>
+            ) : null}
+          </p>
 
           <p className="access-foot">
             ¿Administras un gimnasio? <Link to={ROUTES.affiliation}>Solicita la afiliación</Link>

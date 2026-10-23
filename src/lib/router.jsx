@@ -15,9 +15,17 @@ const NAV_EVENT = 'rutine:navigate';
 export const ROUTES = {
   home: '/',
   explore: '/gimnasios',
+  gymProfile: '/gimnasios/:slug',
+  trainerProfile: '/gimnasios/:slug/entrenadores/:trainer',
   affiliation: '/afiliacion',
   access: '/acceso',
+  resetPassword: '/restablecer',
+  panel: '/panel',
+  panelTrainers: '/panel/:gymId/entrenadores',
+  panelTrainerEdit: '/panel/:gymId/entrenadores/:trainerId',
 };
+
+export { buildPath, matchPath } from './routeMatch.js';
 
 function readLocation() {
   if (HASH_MODE) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import GymSearchForm from '../components/landing/GymSearchForm.jsx';
 import Icon from '../components/ui/Icon.jsx';
-import { Link, navigate, useLocation, ROUTES } from '../lib/router.jsx';
+import { Link, navigate, useLocation, buildPath, ROUTES } from '../lib/router.jsx';
 import { searchGyms } from '../services/gyms.js';
 
 export default function ExplorePage() {
@@ -12,14 +12,14 @@ export default function ExplorePage() {
     nombre: searchParams.get('nombre') ?? '',
   };
   const key = `${filters.estado}|${filters.ciudad}|${filters.nombre}`;
-  const [state, setState] = useState({ status: 'loading', items: [], connected: false });
+  const [state, setState] = useState({ status: 'loading', items: [], connected: false, demoExample: null });
 
   useEffect(() => {
     let active = true;
     setState((s) => ({ ...s, status: 'loading' }));
     searchGyms(filters)
-      .then((res) => active && setState({ status: 'done', items: res.items, connected: res.connected }))
-      .catch(() => active && setState({ status: 'error', items: [], connected: false }));
+      .then((res) => active && setState({ status: 'done', items: res.items, connected: res.connected, demoExample: res.demoExample }))
+      .catch(() => active && setState({ status: 'error', items: [], connected: false, demoExample: null }));
     return () => {
       active = false;
     };
@@ -65,8 +65,10 @@ export default function ExplorePage() {
             <ul className="gym-list">
               {state.items.map((gym) => (
                 <li key={gym.id} className="gym-card">
-                  <h2>{gym.name}</h2>
+                  <h2><Link to={buildPath(ROUTES.gymProfile, { slug: gym.slug })} className="card-link">{gym.trade_name}</Link></h2>
                   <p><Icon name="pin" size={16} /> {gym.city}, {gym.state}</p>
+                  {gym.description ? <p className="gym-card-desc">{gym.description}</p> : null}
+                  <span className="trainer-tile-cta" aria-hidden="true">Ver gimnasio</span>
                 </li>
               ))}
             </ul>
@@ -86,6 +88,22 @@ export default function ExplorePage() {
                 <Link to={ROUTES.home} className="btn btn--ghost">Volver al inicio</Link>
               </div>
             </div>
+          )}
+
+          {state.status === 'done' && state.demoExample && (
+            <section className="demo-example" aria-labelledby="demo-example-t">
+              <h2 id="demo-example-t">Así se verá un gimnasio afiliado</h2>
+              <p className="muted">Mientras se publican los primeros gimnasios, puedes recorrer un perfil de demostración.</p>
+              <ul className="gym-list">
+                <li className="gym-card gym-card--demo">
+                  <span className="demo-badge"><Icon name="info" size={14} />Ejemplo, no es un gimnasio real</span>
+                  <h3><Link to={buildPath(ROUTES.gymProfile, { slug: state.demoExample.slug })} className="card-link">{state.demoExample.trade_name}</Link></h3>
+                  <p><Icon name="pin" size={16} /> {state.demoExample.locations[0].city}, {state.demoExample.locations[0].state} · {state.demoExample.locations.length} sedes</p>
+                  <p className="gym-card-desc">Planes, horarios y equipo de entrenadores de ejemplo.</p>
+                  <span className="trainer-tile-cta" aria-hidden="true">Ver perfil de ejemplo</span>
+                </li>
+              </ul>
+            </section>
           )}
         </div>
       </div>

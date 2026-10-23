@@ -26,4 +26,12 @@ export const business = {
 
   // Redes sociales reales, por ejemplo: [{ label: 'Instagram', url: 'https://instagram.com/...' }]
   social: [],
+
+  // Funciones que dependen de pagos o reservas reales. Se activan cuando exista
+  // el flujo completo en el servidor; mientras estén en false, sus botones no se muestran.
+  features: {
+    onlineEnrollment: false,   // Inscribirse y pagar desde el perfil del gimnasio (fase 5)
+    trainerBooking: false,     // Reservar sesiones con un entrenador (fase 3–4)
+    trainerInquiry: false,     // Formulario de solicitud de información al entrenador
+  },
 };

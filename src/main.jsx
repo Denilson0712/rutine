@@ -4,6 +4,7 @@ import App from './App.jsx';
 import './styles/global.css';
 import './styles/landing.css';
 import './styles/pages.css';
+import './styles/gym.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
