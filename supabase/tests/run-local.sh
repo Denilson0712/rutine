@@ -12,6 +12,7 @@ for f in "$DIR"/migrations/*.sql; do
   echo "migración: $(basename "$f")"
   psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$f" >/dev/null
 done
+psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$DIR/tests/shim/test_helpers.sql" >/dev/null
 for f in "$DIR"/tests/*_test.sql; do
   echo "pruebas: $(basename "$f")"
   psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$f" | sed -n '/resultado/,$p'
