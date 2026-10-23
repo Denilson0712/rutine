@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import Field from '../components/ui/Field.jsx';
+import Icon from '../components/ui/Icon.jsx';
 import FormNotice from '../components/ui/FormNotice.jsx';
 import { Link, ROUTES, navigate, useLocation } from '../lib/router.jsx';
 import { EMAIL_RE } from '../lib/validation.js';
@@ -15,7 +16,11 @@ const MODES = [
 export default function AccessPage() {
   const [mode, setMode] = useState('login'); // login | signup | reset
   const [message, setMessage] = useState('');
-  const { refresh } = useAuth();
+  const { refresh, backendConfigured, enterDemo } = useAuth();
+  const enterAs = (role) => {
+    const sess = enterDemo(role);
+    navigate(safeReturnPath(searchParams.get('volver')) || (role === 'owner' ? defaultDestination(sess.workspaces) : '/cuenta'));
+  };
   const { searchParams } = useLocation();
   const [values, setValues] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -72,6 +77,21 @@ export default function AccessPage() {
       <div className="container access-page">
         <div className="form-card form-card--narrow">
           <h1>{mode === 'login' ? 'Accede a tu cuenta' : mode === 'signup' ? 'Crea tu cuenta' : 'Recupera tu contraseña'}</h1>
+
+          {!backendConfigured && (
+            <section className="demo-access" aria-labelledby="demo-access-t">
+              <h2 id="demo-access-t">Probar en modo demostración</h2>
+              <p>Todavía no hay servidor de cuentas. Entra con un perfil de prueba para ver cómo funciona por dentro. No se guarda nada real.</p>
+              <div className="demo-access-buttons">
+                <button type="button" className="btn btn--primary btn--lg" onClick={() => enterAs('owner')}>
+                  <Icon name="store" size={20} />Entrar como dueño de gimnasio
+                </button>
+                <button type="button" className="btn btn--ghost btn--lg" onClick={() => enterAs('athlete')}>
+                  <Icon name="dumbbell" size={20} />Entrar como atleta
+                </button>
+              </div>
+            </section>
+          )}
 
           {mode !== 'reset' && (
           <div

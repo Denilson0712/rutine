@@ -1,31 +1,32 @@
 import { useEffect } from 'react';
 import { useAuth } from './AuthProvider.jsx';
 import { canManageGym } from '../lib/workspaces.js';
-import { Link, navigate, ROUTES } from '../lib/router.jsx';
+import { Link, navigate, ROUTES, useLocation } from '../lib/router.jsx';
 import Icon from '../components/ui/Icon.jsx';
 
+/** Lleva al login si no hay sesión, recordando a dónde volver. */
+export function useRequireLogin() {
+  const { loading, user } = useAuth();
+  const { path } = useLocation();
+  useEffect(() => {
+    if (!loading && !user) navigate(`${ROUTES.access}?volver=${encodeURIComponent(path)}`, { replace: true });
+  }, [loading, user, path]);
+  return { ready: !loading && Boolean(user) };
+}
+
+export function LoadingPage() {
+  return <div className="page"><div className="container"><div className="skeleton" style={{ height: 240 }} /></div></div>;
+}
+
 /**
- * Protege rutas del panel en el cliente (experiencia de usuario).
+ * Protege el panel del gimnasio en el cliente (experiencia de usuario).
  * La protección real está en el servidor: RLS y funciones SQL rechazan
  * cualquier operación de quien no administra el gimnasio.
- * En modo demostración deja pasar solo al gimnasio de demostración.
  */
 export default function RequireGymAdmin({ gymId, children }) {
-  const { loading, user, workspaces, backendConfigured } = useAuth();
-
-  useEffect(() => {
-    if (backendConfigured && !loading && !user) {
-      const back = encodeURIComponent(window.location.pathname);
-      navigate(`${ROUTES.access}?volver=${back}`, { replace: true });
-    }
-  }, [backendConfigured, loading, user]);
-
-  if (!backendConfigured) {
-    return gymId === 'demo' ? children : <Denied />;
-  }
-  if (loading || !user) {
-    return <div className="page"><div className="container"><div className="skeleton" style={{ height: 240 }} /></div></div>;
-  }
+  const { workspaces } = useAuth();
+  const { ready } = useRequireLogin();
+  if (!ready) return <LoadingPage />;
   if (gymId && !canManageGym(workspaces, gymId)) return <Denied />;
   return children;
 }

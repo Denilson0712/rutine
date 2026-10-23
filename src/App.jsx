@@ -10,6 +10,7 @@ import AccessPage from './pages/AccessPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import PanelHomePage from './pages/panel/PanelHomePage.jsx';
+import AccountPage from './pages/AccountPage.jsx';
 import PanelTrainersPage from './pages/panel/PanelTrainersPage.jsx';
 import PanelTrainerEditPage from './pages/panel/PanelTrainerEditPage.jsx';
 import RequireGymAdmin from './auth/RequireGymAdmin.jsx';
@@ -28,6 +29,7 @@ const ROUTE_TABLE = [
   { path: ROUTES.affiliation, Component: AffiliationPage, title: `Afiliar mi gimnasio${TITLE_SUFFIX}` },
   { path: ROUTES.access, Component: AccessPage, title: `Acceder${TITLE_SUFFIX}` },
   { path: ROUTES.resetPassword, Component: ResetPasswordPage, title: `Restablecer contraseña${TITLE_SUFFIX}` },
+  { path: ROUTES.account, Component: AccountPage, title: `Mi cuenta${TITLE_SUFFIX}` },
   { path: ROUTES.panel, Component: PanelHomePage, title: `Mis gimnasios${TITLE_SUFFIX}`, panel: true },
   { path: ROUTES.panelTrainers, Component: PanelTrainersPage, title: `Entrenadores · Panel${TITLE_SUFFIX}`, panel: true, guard: true },
   { path: ROUTES.panelTrainerEdit, Component: PanelTrainerEditPage, title: `Entrenador · Panel${TITLE_SUFFIX}`, panel: true, guard: true },

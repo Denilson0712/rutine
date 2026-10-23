@@ -306,3 +306,19 @@ fieldset:disabled .btn, fieldset:disabled .chip, fieldset:disabled .icon-btn { o
 .panel-toolbar .segmented { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .panel-toolbar .segmented button { flex: none; }
 .profile-section { scroll-margin-top: 64px; }
+
+/* Acceso de demostración */
+.demo-access { display: grid; gap: 0.75rem; padding: 1.15rem; border: 1px dashed rgba(242, 193, 78, 0.55); border-radius: var(--radius); background: var(--warn-soft); }
+.demo-access h2 { font-size: 1.1rem; }
+.demo-access p { font-size: var(--fs-sm); color: var(--text-muted); }
+.demo-access-buttons { display: grid; gap: 0.6rem; }
+.demo-access-buttons .btn { width: 100%; }
+
+/* Espacio del atleta */
+.account-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.account-card { display: grid; gap: 0.6rem; align-content: start; padding: 1.25rem; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg-raised); }
+.account-card h2 { font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem; }
+.account-card h2 .icon { color: var(--accent); }
+.account-card p { font-size: var(--fs-sm); color: var(--text-muted); }
+.account-card--wide { grid-column: 1 / -1; }
+.soon { justify-self: start; font-size: 0.78rem; padding: 0.1rem 0.5rem; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--text-faint); }

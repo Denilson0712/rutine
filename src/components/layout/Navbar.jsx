@@ -61,12 +61,12 @@ export default function Navbar() {
             ))}
             {user ? (
               <>
-                {hasPanel && (
-                  <li className="navbar-links-login">
-                    <Link to={ROUTES.panel} onClick={close}>Mi panel</Link>
-                  </li>
-                )}
-                <li className={hasPanel ? '' : 'navbar-links-login'}>
+                <li className="navbar-links-login">
+                  {hasPanel
+                    ? <Link to={ROUTES.panel} onClick={close}>Mi panel</Link>
+                    : <Link to={ROUTES.account} onClick={close}>Mi cuenta</Link>}
+                </li>
+                <li>
                   <button type="button" className="nav-button" onClick={async () => { close(); await signOut(); navigate(ROUTES.home); }}>
                     Cerrar sesión
                   </button>

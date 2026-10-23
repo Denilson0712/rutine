@@ -1,10 +1,10 @@
 import { useAsync } from '../GymProfilePage.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import DemoNotice from '../../components/ui/DemoNotice.jsx';
-import { Link, buildPath, ROUTES, navigate } from '../../lib/router.jsx';
+import { Link, buildPath, ROUTES } from '../../lib/router.jsx';
 import { listManageableGyms, panelIsDemo } from '../../services/panelTrainers.js';
+import { useRequireLogin, LoadingPage } from '../../auth/RequireGymAdmin.jsx';
 import { useAuth } from '../../auth/AuthProvider.jsx';
-import { useEffect } from 'react';
 
 const STATUS_LABEL = {
   draft: 'Borrador', submitted: 'Solicitud enviada', under_review: 'En revisión',
@@ -13,13 +13,16 @@ const STATUS_LABEL = {
 
 /** Selector de gimnasio: una persona puede administrar varios sin duplicar cuentas. */
 export default function PanelHomePage() {
-  const { loading, user, backendConfigured } = useAuth();
-  const allowed = !backendConfigured || (!loading && user);
-  const state = useAsync(() => (allowed ? listManageableGyms() : Promise.resolve([])), [allowed]);
-
-  useEffect(() => {
-    if (backendConfigured && !loading && !user) navigate(`${ROUTES.access}?volver=${encodeURIComponent('/panel')}`, { replace: true });
-  }, [backendConfigured, loading, user]);
+  const { ready } = useRequireLogin();
+  const { workspaces } = useAuth();
+  // En demostración, los gimnasios salen de la sesión de prueba (un atleta no tiene ninguno).
+  const load = () => {
+    if (!ready) return Promise.resolve([]);
+    if (panelIsDemo) return Promise.resolve((workspaces?.gyms || []).filter((g) => ['owner', 'manager'].includes(g.role)));
+    return listManageableGyms();
+  };
+  const state = useAsync(load, [ready, workspaces]);
+  if (!ready) return <LoadingPage />;
 
   return (
     <div className="page">

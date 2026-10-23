@@ -20,6 +20,7 @@ export const ROUTES = {
   affiliation: '/afiliacion',
   access: '/acceso',
   resetPassword: '/restablecer',
+  account: '/cuenta',
   panel: '/panel',
   panelTrainers: '/panel/:gymId/entrenadores',
   panelTrainerEdit: '/panel/:gymId/entrenadores/:trainerId',
