@@ -29,6 +29,8 @@ test('planes: cada precio queda en su grupo', () => {
   assert.deepEqual(g.memberships.map((p) => p.id), [4, 1]);
   assert.deepEqual(g.single.map((p) => p.id), [3]);
   assert.equal(formatPrice(30, 'USD'), 'US$ 30');
+  assert.equal(formatPrice(30, 'RUN'), '30 RUN');
+  assert.equal(formatPrice(12.5), '12,50 RUN', 'RUN es la moneda por defecto');
   assert.match(formatPrice(1250.5, 'VES'), /^Bs\. 1\.250,50$/);
 });
 

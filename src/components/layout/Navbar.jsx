@@ -7,7 +7,6 @@ import { useAuth } from '../../auth/AuthProvider.jsx';
 const SECTION_LINKS = [
   { section: 'explorar', label: 'Explorar gimnasios' },
   { section: 'gimnasios', label: 'Para gimnasios' },
-  { section: 'entrenadores', label: 'Para entrenadores' },
 ];
 
 export default function Navbar() {

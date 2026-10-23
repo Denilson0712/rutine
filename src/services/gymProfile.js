@@ -3,6 +3,16 @@ import { getDemoGym } from './demoStore.js';
 
 const hhmm = (t) => (t ? t.slice(0, 5) : t);
 
+// Lo que puede ver cualquier visitante.
+const BASIC_SELECT = `
+  id, slug, trade_name, description, amenities, services, affiliation_status,
+  public_phone, public_email, public_whatsapp, instagram,
+  locations:gym_locations(id, name, state, city, address, latitude, longitude, is_primary,
+    hours:gym_opening_hours(weekday, opens_at, closes_at)),
+  photos:gym_photos(id, storage_path, alt_text, sort_order)`;
+
+// Con sesión iniciada: precios y entrenadores (la base de datos
+// rechaza estas tablas a usuarios anónimos; ver migración 0800).
 const PROFILE_SELECT = `
   id, slug, trade_name, description, amenities, services, affiliation_status,
   public_phone, public_email, public_whatsapp, instagram,
@@ -21,6 +31,7 @@ export function normalizeGym(raw) {
   return {
     ...raw,
     isDemo: false,
+    membersDetails: Boolean(raw.membersDetails),
     // Las reseñas verificadas llegan en la fase 4: hasta entonces no hay calificación.
     rating: { average: null, count: 0 },
     classes: [],
@@ -50,20 +61,27 @@ export function publicTrainers(gym) {
  * Perfil público de un gimnasio por su slug.
  * Devuelve el gimnasio o null si no existe / no está publicado.
  */
-export async function getGymProfile(slug) {
+export async function getGymProfile(slug, { signedIn = false } = {}) {
   if (!backendConfigured) {
     const demo = getDemoGym();
-    return slug === demo.slug ? structuredClone(demo) : null;
+    if (slug !== demo.slug) return null;
+    const copy = structuredClone(demo);
+    copy.membersDetails = signedIn;
+    // Igual que el servidor: sin sesión no se entregan precios ni entrenadores.
+    if (!signedIn) { copy.plans = []; copy.trainers = []; }
+    return copy;
   }
   const sb = await getSupabase();
+  const { data: sess } = await sb.auth.getSession();
+  const withDetails = signedIn && Boolean(sess.session);
   const { data, error } = await sb
     .from('gyms')
-    .select(PROFILE_SELECT)
+    .select(withDetails ? PROFILE_SELECT : BASIC_SELECT)
     .eq('slug', slug)
     .eq('affiliation_status', 'approved')
     .maybeSingle();
   if (error) throw new Error(friendlyError(error));
-  return data ? normalizeGym(data) : null;
+  return data ? normalizeGym({ ...data, membersDetails: withDetails }) : null;
 }
 
 /**
@@ -71,7 +89,7 @@ export async function getGymProfile(slug) {
  * Devuelve { gym, trainer } o null.
  */
 export async function getTrainerProfile(gymSlug, trainerSlug) {
-  const gym = await getGymProfile(gymSlug);
+  const gym = await getGymProfile(gymSlug, { signedIn: true });
   if (!gym) return null;
   const trainer = publicTrainers(gym).find((t) => t.slug === trainerSlug);
   return trainer ? { gym, trainer } : null;

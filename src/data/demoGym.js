@@ -5,6 +5,15 @@
  * No representa a ningún gimnasio ni persona real. Sin fotos de personas.
  */
 const L1 = 'demo-loc-chacao';
+
+/** Imagen gráfica de ejemplo (no es una foto real) para mostrar la galería. */
+function demoPhoto(label, variant) {
+  const hue = [150, 160, 140, 155, 145][variant % 5];
+  const cx = [80, 20, 50, 90, 10][variant % 5];
+  const rings = Array.from({ length: 14 }, (_, i) => `<circle cx="${cx}%" cy="115%" r="${60 + i * 46}" fill="none" stroke="hsla(${hue},85%,60%,0.22)" stroke-width="1.5"/>`).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue},14%,14%)"/><stop offset="1" stop-color="hsl(${hue},10%,7%)"/></linearGradient></defs><rect width="1200" height="800" fill="url(#g)"/>${rings}<text x="600" y="385" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" font-weight="700" fill="#f1f4ef">${label}</text><text x="600" y="440" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#a9b1aa">Foto de ejemplo</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
 const L2 = 'demo-loc-altamira';
 
 export const DEMO_GYM = {
@@ -21,8 +30,11 @@ export const DEMO_GYM = {
   public_email: null,
   public_whatsapp: null,
   instagram: null,
-  rating: { average: null, count: 0 },
-  photos: [],
+  // Reseñas DE EJEMPLO para mostrar cómo se ven las estrellas en el perfil.
+  rating: { average: 4.6, count: 28, isExample: true },
+  photos: [
+    'Zona de peso libre', 'Área funcional', 'Máquinas guiadas', 'Sala de clases', 'Vestuarios',
+  ].map((label, i) => ({ id: `ph${i}`, storage_path: demoPhoto(label, i), alt_text: `${label} (imagen de ejemplo)`, sort_order: i })),
   classes: [],
   locations: [
     {
@@ -39,11 +51,11 @@ export const DEMO_GYM = {
     },
   ],
   plans: [
-    { id: 'p1', name: 'Inscripción', kind: 'enrollment', price_amount: 15, currency: 'USD', description: 'Pago único al registrarte. Incluye evaluación inicial.', sort_order: 0 },
-    { id: 'p2', name: 'Plan mensual', kind: 'monthly', price_amount: 30, currency: 'USD', description: 'Acceso libre en horario de atención.', sort_order: 1 },
-    { id: 'p3', name: 'Plan trimestral', kind: 'quarterly', price_amount: 80, currency: 'USD', description: 'Acceso libre durante 3 meses.', sort_order: 2 },
-    { id: 'p4', name: 'Plan anual', kind: 'annual', price_amount: 290, currency: 'USD', description: 'Acceso libre durante 12 meses.', sort_order: 3 },
-    { id: 'p5', name: 'Clase individual', kind: 'single_class', price_amount: 6, currency: 'USD', description: 'Una clase grupal, sujeta a cupos.', sort_order: 4 },
+    { id: 'p1', name: 'Inscripción', kind: 'enrollment', price_amount: 15, currency: 'RUN', description: 'Pago único al registrarte. Incluye evaluación inicial.', sort_order: 0 },
+    { id: 'p2', name: 'Plan mensual', kind: 'monthly', price_amount: 30, currency: 'RUN', description: 'Acceso libre en horario de atención.', sort_order: 1 },
+    { id: 'p3', name: 'Plan trimestral', kind: 'quarterly', price_amount: 80, currency: 'RUN', description: 'Acceso libre durante 3 meses.', sort_order: 2 },
+    { id: 'p4', name: 'Plan anual', kind: 'annual', price_amount: 290, currency: 'RUN', description: 'Acceso libre durante 12 meses.', sort_order: 3 },
+    { id: 'p5', name: 'Clase individual', kind: 'single_class', price_amount: 6, currency: 'RUN', description: 'Una clase grupal, sujeta a cupos.', sort_order: 4 },
   ],
   trainers: [
     {

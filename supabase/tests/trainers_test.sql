@@ -74,9 +74,9 @@ select t.ok((select full_name from public.trainers where id = current_setting('t
 -- -----------------------------------------------------------------------------
 -- Visibilidad pública
 -- -----------------------------------------------------------------------------
-set role anon;
-select t.act_as(null);
-select t.ok(t.count('select 1 from public.trainers') = 0, 'una ficha no publicada es invisible al público');
+set role authenticated;
+select t.act_as('10000000-0000-0000-0000-0000000000c1');
+select t.ok(t.count('select 1 from public.trainers') = 0, 'una ficha no publicada es invisible para los atletas');
 reset role;
 
 set role authenticated;
@@ -86,10 +86,17 @@ reset role;
 
 set role anon;
 select t.act_as(null);
-select t.ok(t.count('select 1 from public.trainers') = 1, 'la ficha publicada aparece');
-select t.ok(t.count('select 1 from public.trainer_availability') = 1, 'su disponibilidad es pública');
-select t.ok(t.count('select 1 from public.trainer_certifications') = 1, 'sus certificaciones son públicas');
+select t.fails('select * from public.trainers', 'sin sesión no se ven los entrenadores');
+select t.fails('select * from public.trainer_availability', 'sin sesión no se ve su disponibilidad');
+select t.fails('select * from public.membership_plans', 'sin sesión no se ven los precios');
+select t.ok(t.count('select 1 from public.gyms') = 2, 'sin sesión sí se ven los datos básicos de los gimnasios');
 select t.fails('select * from public.trainer_accounts', 'el vínculo con cuentas de usuario no es público');
+reset role;
+set role authenticated;
+select t.act_as('10000000-0000-0000-0000-0000000000c1');
+select t.ok(t.count('select 1 from public.trainers') = 1, 'con sesión, el atleta ve la ficha publicada');
+select t.ok(t.count('select 1 from public.trainer_availability') = 1, 'y su disponibilidad');
+select t.ok(t.count('select 1 from public.trainer_certifications') = 1, 'y sus certificaciones');
 select t.ok(t.count(format('select 1 from public.trainers where gym_id = %L', current_setting('t.gy'))) = 0,
   'filtrar por gimnasio no mezcla entrenadores de otros gimnasios');
 reset role;
@@ -151,9 +158,9 @@ select t.fails(format($$insert into public.membership_plans (gym_id, name, kind,
   'no se aceptan precios negativos');
 reset role;
 
-set role anon;
-select t.act_as(null);
-select t.ok(t.count('select 1 from public.membership_plans') = 1, 'el público solo ve planes publicados');
+set role authenticated;
+select t.act_as('10000000-0000-0000-0000-0000000000c1');
+select t.ok(t.count('select 1 from public.membership_plans') = 1, 'el atleta solo ve planes publicados');
 reset role;
 
 -- Guardado atómico con save_trainer
@@ -192,8 +199,8 @@ set role authenticated;
 select t.act_as('10000000-0000-0000-0000-00000000000a');
 select public.admin_set_affiliation_status(current_setting('t.gx')::uuid, 'suspended', 'Prueba de suspensión');
 reset role;
-set role anon;
-select t.act_as(null);
+set role authenticated;
+select t.act_as('10000000-0000-0000-0000-0000000000c1');
 select t.ok(t.count('select 1 from public.trainers') = 0, 'los entrenadores de un gimnasio suspendido no se publican');
 reset role;
 

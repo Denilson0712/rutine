@@ -20,7 +20,7 @@ export default function Footer() {
           <ul>
             <li><Link to={ROUTES.home}>Inicio</Link></li>
             <li><Link to={ROUTES.explore}>Explorar gimnasios</Link></li>
-            <li><SectionLink section="entrenadores">Para entrenadores</SectionLink></li>
+            <li><SectionLink section="como-funciona">Cómo funciona</SectionLink></li>
             <li><SectionLink section="faq">Preguntas frecuentes</SectionLink></li>
           </ul>
         </nav>

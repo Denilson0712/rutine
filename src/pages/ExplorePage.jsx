@@ -3,9 +3,14 @@ import GymSearchForm from '../components/landing/GymSearchForm.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import { Link, navigate, useLocation, buildPath, ROUTES } from '../lib/router.jsx';
 import { searchGyms } from '../services/gyms.js';
+import { useAuth } from '../auth/AuthProvider.jsx';
+import Stars from '../components/gym/Stars.jsx';
+import { mediaUrl } from '../lib/supabase.js';
+import { cheapestMembership, formatPrice, priceSuffix } from '../lib/gymFormat.js';
 
 export default function ExplorePage() {
   const { searchParams } = useLocation();
+  const { user } = useAuth();
   const filters = {
     estado: searchParams.get('estado') ?? '',
     ciudad: searchParams.get('ciudad') ?? '',
@@ -95,11 +100,24 @@ export default function ExplorePage() {
               <h2 id="demo-example-t">Así se verá un gimnasio afiliado</h2>
               <p className="muted">Mientras se publican los primeros gimnasios, puedes recorrer un perfil de demostración.</p>
               <ul className="gym-list">
-                <li className="gym-card gym-card--demo">
+                <li className="gym-card gym-card--demo gym-card--photo">
+                  {state.demoExample.photos[0] && (
+                    <img className="gym-card-img" src={mediaUrl(state.demoExample.photos[0].storage_path)} alt="" width="600" height="400" loading="lazy" />
+                  )}
                   <span className="demo-badge"><Icon name="info" size={14} />Ejemplo, no es un gimnasio real</span>
                   <h3><Link to={buildPath(ROUTES.gymProfile, { slug: state.demoExample.slug })} className="card-link">{state.demoExample.trade_name}</Link></h3>
                   <p><Icon name="pin" size={16} /> {state.demoExample.locations[0].city}, {state.demoExample.locations[0].state} · {state.demoExample.locations.length} sedes</p>
-                  <p className="gym-card-desc">Planes, horarios y equipo de entrenadores de ejemplo.</p>
+                  {user ? (
+                    <>
+                      <Stars rating={state.demoExample.rating} size="sm" />
+                      {(() => {
+                        const p = cheapestMembership(state.demoExample.plans);
+                        return p ? <p className="card-price"><strong>{formatPrice(p.price_amount, p.currency)}</strong> {priceSuffix(p)}</p> : null;
+                      })()}
+                    </>
+                  ) : (
+                    <p className="gym-card-desc"><Icon name="lock" size={14} /> Inicia sesión para ver precio y calificación.</p>
+                  )}
                   <span className="trainer-tile-cta" aria-hidden="true">Ver perfil de ejemplo</span>
                 </li>
               </ul>

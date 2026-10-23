@@ -8,14 +8,20 @@ import { Link, buildPath, ROUTES } from '../lib/router.jsx';
 import { groupByWeekday } from '../lib/gymFormat.js';
 import { getTrainerProfile } from '../services/gymProfile.js';
 import { business } from '../config/business.js';
+import { useRequireLogin, LoadingPage } from '../auth/RequireGymAdmin.jsx';
 
 export default function TrainerProfilePage({ params }) {
-  const { status, data, error } = useAsync(() => getTrainerProfile(params.slug, params.trainer), [params.slug, params.trainer]);
+  const { ready } = useRequireLogin();
+  const { status, data, error } = useAsync(
+    () => (ready ? getTrainerProfile(params.slug, params.trainer) : new Promise(() => {})),
+    [params.slug, params.trainer, ready],
+  );
 
   useEffect(() => {
     if (data) document.title = `${data.trainer.full_name} · ${data.gym.trade_name} · Rutine`;
   }, [data]);
 
+  if (!ready) return <LoadingPage />;
   if (status === 'loading') return <ProfileSkeleton />;
   if (status === 'error') return <ProfileMissing title="No se pudo cargar el perfil" text={error.message || 'Inténtalo de nuevo.'} />;
   if (!data) return <ProfileMissing title="Entrenador no encontrado" text="Puede que el perfil ya no esté publicado por su gimnasio." />;

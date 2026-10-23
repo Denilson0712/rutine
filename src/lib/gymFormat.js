@@ -27,14 +27,21 @@ export function priceSuffix(plan) {
   return plan.duration_days ? `por ${plan.duration_days} días` : '';
 }
 
-export function formatPrice(amount, currency = 'USD') {
+export function formatPrice(amount, currency = 'RUN') {
   const n = Number(amount);
   if (!Number.isFinite(n)) return '';
   const value = n.toLocaleString('es-VE', {
     minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
     maximumFractionDigits: 2,
   });
+  if (currency === 'RUN') return `${value} RUN`;
   return currency === 'VES' ? `Bs. ${value}` : `US$ ${value}`;
+}
+
+/** Plan de membresía más barato, para el «Desde … al mes». */
+export function cheapestMembership(plans = []) {
+  const m = groupPlans(plans).memberships;
+  return m.length ? m.reduce((a, b) => (Number(a.price_amount) <= Number(b.price_amount) ? a : b)) : null;
 }
 
 /** Separa inscripción, membresías y clases sueltas para que cada precio se entienda. */
@@ -87,7 +94,7 @@ export function initials(name = '') {
 
 /** Texto del resumen de reseñas: nunca muestra estrellas sin reseñas reales. */
 export function ratingSummary(rating) {
-  if (!rating || !rating.count) return { hasReviews: false, text: 'Aún no tiene reseñas' };
+  if (!rating || !rating.count) return { hasReviews: false, text: 'Nuevo en Rutine · aún sin reseñas' };
   const avg = Math.round(rating.average * 10) / 10;
   return {
     hasReviews: true,
